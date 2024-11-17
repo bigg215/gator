@@ -20,7 +20,7 @@ func handlerAddFeed(s *state, cmd command) error {
 	currentUserName, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid user: %w", err)
 	}
 
 	newFeed := database.CreateFeedParams{
@@ -35,9 +35,22 @@ func handlerAddFeed(s *state, cmd command) error {
 	feedResp, err := s.db.CreateFeed(context.Background(), newFeed)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating feed: %w", err)
 	}
 
-	fmt.Println(feedResp)
+	feedFollow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    currentUserName.ID,
+		FeedID:    feedResp.ID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error creating feed follow: %w", err)
+	}
+
+	fmt.Println("Feed follow created successfully.")
+	fmt.Println(feedFollow)
 	return nil
 }
