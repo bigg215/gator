@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bigg215/gator/internal/database"
@@ -93,6 +94,38 @@ func handlerUnfollow(s *state, cmd command, user database.User) error {
 
 	if err != nil {
 		return fmt.Errorf("unable to delete feed follow error: %w", err)
+	}
+
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	limit := 2
+
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("usage %s <limit>", cmd.Name)
+	}
+
+	if len(cmd.Args) == 1 {
+		limit, _ = strconv.Atoi(cmd.Args[0])
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(limit),
+	})
+
+	if err != nil {
+		return fmt.Errorf("error creating post %w", err)
+	}
+
+	if len(posts) == 0 {
+		fmt.Println("no posts found")
+		return nil
+	}
+
+	for _, post := range posts {
+		fmt.Printf("title:\t%s\n", post.Title)
 	}
 
 	return nil
