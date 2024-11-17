@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("usage %s <name> <url>", cmd.Name)
 	}
@@ -17,19 +17,13 @@ func handlerAddFeed(s *state, cmd command) error {
 	name := cmd.Args[0]
 	url := cmd.Args[1]
 
-	currentUserName, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-
-	if err != nil {
-		return fmt.Errorf("invalid user: %w", err)
-	}
-
 	newFeed := database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 		Name:      name,
 		Url:       url,
-		UserID:    currentUserName.ID,
+		UserID:    user.ID,
 	}
 
 	feedResp, err := s.db.CreateFeed(context.Background(), newFeed)
@@ -42,7 +36,7 @@ func handlerAddFeed(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		UserID:    currentUserName.ID,
+		UserID:    user.ID,
 		FeedID:    feedResp.ID,
 	})
 
